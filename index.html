@@ -97,6 +97,7 @@
     <!-- POSITION CONFIG -->
     <div class="panel">
       <div class="ptitle">Tu operación</div>
+      <div style="text-align:right;margin-top:-8px;margin-bottom:8px"><button class="btn2" style="font-size:10px;padding:4px 8px" onclick="resetAll()">↺ Limpiar todo (nueva operación)</button></div>
       <div class="row r3">
         <div><label>Entry (apertura)</label><input id="entry" type="number" step="0.01"></div>
         <div><label>Balas apertura</label><input id="openB" type="number" step="1"></div>
@@ -221,11 +222,10 @@ async function sSet(k,v){try{if(window.storage){await window.storage.set(k,v,fal
 
 // ---------- default state (prefilled con tu operación real) ----------
 const DEF={
-  entry:1521, openB:5, lev:5, budget:10000, tp:20, mm:0.014, price:1650, hwm:1700, openDate:'2026-06-06',
-  genStart:1600, genStep:50, genTop:2400,
-  ladder:[[1600,1],[1650,1],[1700,1],[1750,1],[1800,1],[1850,1],[1900,2],[1950,2],
-          [2000,3],[2050,3],[2100,4],[2150,4],[2200,5],[2250,5],[2300,6],[2350,7],[2400,8]],
-  clLongP:1565, clLongM:73, clShortP:2149, clShortM:100,
+  entry:0, openB:0, lev:5, budget:0, tp:20, mm:0.014, price:0, hwm:0, openDate:'',
+  genStart:0, genStep:50, genTop:0,
+  ladder:[],
+  clLongP:0, clLongM:0, clShortP:0, clShortM:0,
   hist:[]
 };
 let S=JSON.parse(JSON.stringify(DEF));
@@ -233,6 +233,13 @@ let S=JSON.parse(JSON.stringify(DEF));
 async function load(){const r=await sGet('eth_dash_v2');if(r){try{S=Object.assign(JSON.parse(JSON.stringify(DEF)),JSON.parse(r))}catch(e){}}
   bindInputs();renderLadder();compute();renderHist()}
 async function save(){await sSet('eth_dash_v2',JSON.stringify(S))}
+async function resetAll(){
+  if(!confirm('¿Limpiar todo y empezar una operación nueva? Se borra lo que esté cargado en este navegador.'))return;
+  try{if(window.storage)await window.storage.delete('eth_dash_v2',false);}catch(e){}
+  try{if(typeof localStorage!=='undefined')localStorage.removeItem('eth_dash_v2');}catch(e){}
+  S=JSON.parse(JSON.stringify(DEF));
+  bindInputs();renderLadder();compute();renderHist();
+}
 
 const $=id=>document.getElementById(id);
 const fields=['entry','openB','lev','budget','tp','mm','price','hwm','genStart','genStep','genTop','clLongP','clLongM','clShortP','clShortM'];
