@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETH Short — Tablero de Campaña</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Archivo:wght@600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0d11; --panel:#13161d; --panel2:#191d26; --line:#262b36;
+    --txt:#e7eaf0; --dim:#8b93a3; --faint:#5a6273;
+    --green:#3fd27e; --red:#ff5d5d; --amber:#ffb020; --cyan:#48d0e0; --accent:#ffd166;
+    --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --disp:"Archivo",var(--mono);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font-family:var(--mono);font-size:13px;line-height:1.5;
+    background-image:radial-gradient(circle at 15% -10%,#1a2330 0,transparent 45%),radial-gradient(circle at 100% 0,#241c10 0,transparent 40%);
+    background-attachment:fixed;padding:18px;min-height:100vh}
+  .wrap{max-width:1080px;margin:0 auto}
+  header{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:8px;
+    border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:18px}
+  h1{font-family:var(--disp);font-weight:800;font-size:21px;letter-spacing:-.02em}
+  h1 span{color:var(--accent)}
+  .sub{color:var(--faint);font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}body{padding:12px}}
+  .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:10px;padding:16px}
+  .panel.full{grid-column:1/-1}
+  .ptitle{font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--dim);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .ptitle::before{content:"";width:6px;height:6px;background:var(--accent);border-radius:1px;display:inline-block}
+  label{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-bottom:3px}
+  input{width:100%;background:#0c0f14;border:1px solid var(--line);color:var(--txt);font-family:var(--mono);
+    font-size:13px;padding:7px 8px;border-radius:6px;outline:none}
+  input:focus{border-color:var(--cyan)}
+  .row{display:grid;gap:8px;margin-bottom:10px}
+  .r2{grid-template-columns:1fr 1fr}.r3{grid-template-columns:1fr 1fr 1fr}
+  button{font-family:var(--mono);font-weight:700;font-size:12px;border:none;border-radius:6px;cursor:pointer;
+    padding:8px 12px;letter-spacing:.03em;transition:.12s}
+  .btn{background:var(--accent);color:#1a1400}.btn:hover{filter:brightness(1.08)}
+  .btn2{background:#222834;color:var(--txt);border:1px solid var(--line)}.btn2:hover{border-color:var(--cyan)}
+  .btn-x{background:transparent;color:var(--red);padding:4px 7px;font-weight:800}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:right;color:var(--faint);font-weight:500;font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+    padding:5px 6px;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  td{text-align:right;padding:5px 6px;border-bottom:1px solid #1c2129}
+  td input{padding:4px 5px;font-size:12px;text-align:right}
+  tr.filled td{color:var(--green)}
+  tr.pending td{color:var(--dim)}
+  .metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--line);border-radius:8px;overflow:hidden}
+  @media(max-width:760px){.metrics{grid-template-columns:1fr 1fr}}
+  .metric{background:var(--panel2);padding:11px 12px}
+  .metric .k{font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
+  .metric .v{font-size:19px;font-weight:800;font-family:var(--disp);margin-top:2px}
+  .metric .x{font-size:10px;color:var(--dim);margin-top:1px}
+  .gauge{margin-top:14px}
+  .gbar{position:relative;height:30px;background:#0c0f14;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .gfill{position:absolute;top:0;bottom:0;left:0;background:linear-gradient(90deg,#1f3a2a,#2a1f1f)}
+  .gmark{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+  .glabels{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:4px}
+  .status{padding:12px 14px;border-radius:8px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:10px;margin-bottom:12px;border:1px solid}
+  .status .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .s-green{background:rgba(63,210,126,.08);border-color:rgba(63,210,126,.35);color:var(--green)}
+  .s-green .dot{background:var(--green);box-shadow:0 0 10px var(--green)}
+  .s-amber{background:rgba(255,176,32,.08);border-color:rgba(255,176,32,.35);color:var(--amber)}
+  .s-amber .dot{background:var(--amber);box-shadow:0 0 10px var(--amber)}
+  .s-red{background:rgba(255,93,93,.08);border-color:rgba(255,93,93,.35);color:var(--red)}
+  .s-red .dot{background:var(--red);box-shadow:0 0 10px var(--red);animation:pulse 1.1s infinite}
+  @keyframes pulse{50%{opacity:.4}}
+  .venue{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #1c2129;font-size:12px}
+  .venue:last-child{border:0}
+  .venue .nm{color:var(--dim)}
+  .pos{color:var(--green)}.neg{color:var(--red)}.neu{color:var(--amber)}
+  .hist{display:flex;align-items:flex-end;gap:3px;height:42px;margin-top:8px}
+  .hbar{flex:1;min-width:3px;border-radius:2px 2px 0 0;opacity:.85}
+  .note{font-size:10.5px;color:var(--faint);line-height:1.5;margin-top:10px}
+  .note b{color:var(--dim)}
+  .muted{color:var(--faint)}
+  .err{color:var(--red);font-size:11px;margin-top:8px}
+  .pill{display:inline-block;font-size:9px;padding:2px 6px;border-radius:4px;background:#222834;color:var(--dim);letter-spacing:.05em}
+  .addrow{margin-top:8px;display:flex;gap:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div><h1>ETH <span>/</span> SHORT — Tablero de Campaña</h1>
+    <div class="sub">posición · funding de las masas · zonas de liquidación</div></div>
+    <div class="sub" id="clock">—</div>
+  </header>
+
+  <div class="grid">
+    <!-- POSITION CONFIG -->
+    <div class="panel">
+      <div class="ptitle">Tu operación</div>
+      <div class="row r3">
+        <div><label>Entry (apertura)</label><input id="entry" type="number" step="0.01"></div>
+        <div><label>Balas apertura</label><input id="openB" type="number" step="1"></div>
+        <div><label>Leverage</label><input id="lev" type="number" step="0.1"></div>
+      </div>
+      <div class="row r3">
+        <div><label>Presupuesto $</label><input id="budget" type="number" step="100"></div>
+        <div><label>TP (% sobre margen ×lev)</label><input id="tp" type="number" step="0.1"></div>
+        <div><label>Mant. margin (mm)</label><input id="mm" type="number" step="0.001"></div>
+      </div>
+      <div class="row r2">
+        <div><label>Precio ETH actual</label><input id="price" type="number" step="0.01"></div>
+        <div><label>Máx. tocado desde apertura</label><input id="hwm" type="number" step="0.01"></div>
+      </div>
+      <div class="row"><div><label>Fecha de apertura (detecta precios visitados)</label><input id="openDate" type="date"></div></div>
+
+      <div class="ptitle" style="margin-top:6px">Escalera (órdenes límite)</div>
+      <div class="row r3" style="align-items:end;margin-bottom:6px">
+        <div><label>Arranca en</label><input id="genStart" type="number" step="1"></div>
+        <div><label>Cada ($)</label><input id="genStep" type="number" step="1"></div>
+        <div><label>Hasta ($)</label><input id="genTop" type="number" step="1"></div>
+      </div>
+      <button class="btn" onclick="genLadder()" style="margin-bottom:10px">⟳ Generar escalera (calcula balas solo)</button>
+      <table id="ladderTbl"><thead><tr><th>Precio</th><th>Balas</th><th>Estado</th><th></th></tr></thead><tbody></tbody></table>
+      <div class="addrow"><button class="btn2" onclick="addRung()">+ Agregar rung</button>
+        <button class="btn2" onclick="sortLadder()">Ordenar</button></div>
+    </div>
+
+    <!-- POSITION RESULT -->
+    <div class="panel">
+      <div class="ptitle">Estado de la posición</div>
+      <div class="metrics">
+        <div class="metric"><div class="k">Balas usadas (ahora)</div><div class="v" id="mBnow">—</div><div class="x" id="mBnowx"></div></div>
+        <div class="metric"><div class="k">Blended entry</div><div class="v" id="mBlend">—</div><div class="x" id="mBlendx"></div></div>
+        <div class="metric"><div class="k">Liquidación (ahora)</div><div class="v" id="mLQ">—</div><div class="x" id="mLQx"></div></div>
+        <div class="metric"><div class="k">Distancia a LQ</div><div class="v" id="mDist">—</div><div class="x">precio → liq</div></div>
+        <div class="metric"><div class="k">TP estimado</div><div class="v" id="mTP">—</div><div class="x" id="mTPx"></div></div>
+        <div class="metric"><div class="k">Reserva</div><div class="v" id="mRes">—</div><div class="x" id="mResx"></div></div>
+      </div>
+      <div class="gauge">
+        <div class="gbar"><div class="gfill" id="gfill"></div><div class="gmark" id="gmark"></div></div>
+        <div class="glabels"><span id="glTP">TP</span><span class="muted">precio</span><span id="glLQ">LQ</span></div>
+      </div>
+      <div class="ptitle" style="margin-top:16px">Proyección — si llena toda la escalera</div>
+      <div class="metrics">
+        <div class="metric"><div class="k">Balas totales</div><div class="v" id="pBtot">—</div><div class="x" id="pBtotx"></div></div>
+        <div class="metric"><div class="k">Blended final</div><div class="v" id="pBlend">—</div></div>
+        <div class="metric"><div class="k">LQ final</div><div class="v" id="pLQ">—</div></div>
+      </div>
+    </div>
+
+    <!-- FUNDING -->
+    <div class="panel full">
+      <div class="ptitle">Funding de las masas — detector de inflexión</div>
+      <div id="fstatus" class="status s-amber"><span class="dot"></span><span id="fstatustxt">Tocá "Consultar mercado" para leer el posicionamiento.</span></div>
+      <div class="grid" style="gap:14px">
+        <div>
+          <div id="venues">
+            <div class="venue"><span class="nm">Binance <span class="pill">8h</span></span><span id="v-binance" class="muted">—</span></div>
+            <div class="venue"><span class="nm">Bybit <span class="pill">8h</span></span><span id="v-bybit" class="muted">—</span></div>
+            <div class="venue"><span class="nm">OKX <span class="pill">8h</span></span><span id="v-okx" class="muted">—</span></div>
+            <div class="venue"><span class="nm">Hyperliquid <span class="pill">1h</span></span><span id="v-hl" class="muted">—</span></div>
+            <div class="venue"><span class="nm">Long/Short ratio (Binance)</span><span id="v-ls" class="muted">—</span></div>
+          </div>
+          <div class="addrow">
+            <button class="btn" onclick="fetchMarket()">↻ Consultar mercado</button>
+            <button class="btn2" onclick="toggleManual()">Entrada manual</button>
+          </div>
+          <div id="manualBox" style="display:none;margin-top:10px">
+            <div class="row r2">
+              <div><label>Funding agregado (% APR)</label><input id="mAggApr" type="number" step="0.1"></div>
+              <div><label>L/S ratio</label><input id="mLs" type="number" step="0.01"></div>
+            </div>
+            <button class="btn2" onclick="applyManual()">Aplicar manual</button>
+          </div>
+          <div id="ferr" class="err"></div>
+        </div>
+        <div>
+          <label>Historial de lecturas (agregado APR) — la inflexión se ve acá</label>
+          <div class="hist" id="hist"></div>
+          <div class="note" id="histnote"><b>Verde</b> = longs pagan (vos cobrás, favorable). <b>Rojo</b> = shorts pagan (la multitud gira a short → estás en la mira). El punto donde el barrio pasa de verde sostenido a rojo es tu señal de alerta.</div>
+        </div>
+      </div>
+      <div class="note">Umbrales heurísticos: agregado &gt; +5% APR = multitud larga · entre ±5% = neutro · &lt; −5% APR = multitud corta. El <b>signo</b> importa más que la magnitud.</div>
+    </div>
+
+    <!-- LIQUIDATION ZONES -->
+    <div class="panel full">
+      <div class="ptitle">Zonas de liquidación vs tu LQ</div>
+      <div class="note" style="margin-top:0;margin-bottom:12px">Estos niveles los leés en Coinglass (no hay API pública gratis) y los cargás acá. El tablero los compara con tu LQ para decirte si tu zona de peligro de arriba está cubierta o cargada de combustible de squeeze.</div>
+      <div class="grid" style="gap:14px">
+        <div>
+          <div class="row r2">
+            <div><label>Cluster LONG abajo — precio</label><input id="clLongP" type="number" step="1"></div>
+            <div><label>$ (millones)</label><input id="clLongM" type="number" step="1"></div>
+          </div>
+          <div class="row r2">
+            <div><label>Cluster SHORT arriba — precio</label><input id="clShortP" type="number" step="1"></div>
+            <div><label>$ (millones)</label><input id="clShortM" type="number" step="1"></div>
+          </div>
+        </div>
+        <div>
+          <div id="clVerdict" class="status s-amber"><span class="dot"></span><span>Cargá los clusters para el veredicto.</span></div>
+          <div class="note" id="clDetail"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note" style="text-align:center;margin-top:18px;max-width:760px;margin-left:auto;margin-right:auto">
+    Herramienta de cálculo y monitoreo — no es consejo financiero ni una señal de compra/venta. Las decisiones de entrar, agregar o cortar son tuyas. Datos en vivo dependen de las APIs públicas de los exchanges y pueden fallar dentro de Claude por CORS; si no cargan, descargá el archivo y abrilo en tu navegador, o usá entrada manual.
+  </div>
+</div>
+
+<script>
+// ---------- storage (Claude artifact -> window.storage; local browser -> localStorage; else memory) ----------
+const mem={};
+async function sGet(k){try{if(window.storage){const r=await window.storage.get(k,false);return r?r.value:null}}catch(e){}
+  try{if(typeof localStorage!=='undefined')return localStorage.getItem(k)}catch(e){} return mem[k]??null}
+async function sSet(k,v){try{if(window.storage){await window.storage.set(k,v,false);return}}catch(e){}
+  try{if(typeof localStorage!=='undefined'){localStorage.setItem(k,v);return}}catch(e){} mem[k]=v}
+
+// ---------- default state (prefilled con tu operación real) ----------
+const DEF={
+  entry:1521, openB:5, lev:5, budget:10000, tp:20, mm:0.014, price:1650, hwm:1700, openDate:'2026-06-06',
+  genStart:1600, genStep:50, genTop:2400,
+  ladder:[[1600,1],[1650,1],[1700,1],[1750,1],[1800,1],[1850,1],[1900,2],[1950,2],
+          [2000,3],[2050,3],[2100,4],[2150,4],[2200,5],[2250,5],[2300,6],[2350,7],[2400,8]],
+  clLongP:1565, clLongM:73, clShortP:2149, clShortM:100,
+  hist:[]
+};
+let S=JSON.parse(JSON.stringify(DEF));
+
+async function load(){const r=await sGet('eth_dash_v2');if(r){try{S=Object.assign(JSON.parse(JSON.stringify(DEF)),JSON.parse(r))}catch(e){}}
+  bindInputs();renderLadder();compute();renderHist()}
+async function save(){await sSet('eth_dash_v2',JSON.stringify(S))}
+
+const $=id=>document.getElementById(id);
+const fields=['entry','openB','lev','budget','tp','mm','price','hwm','genStart','genStep','genTop','clLongP','clLongM','clShortP','clShortM'];
+function bindInputs(){fields.forEach(f=>{$(f).value=S[f];$(f).oninput=()=>{S[f]=parseFloat($(f).value)||0;compute();save()}});
+  $('openDate').value=S.openDate||'';$('openDate').onchange=()=>{S.openDate=$('openDate').value;save()}}
+
+// ---------- ladder ----------
+function renderLadder(){
+  const tb=$('ladderTbl').querySelector('tbody');tb.innerHTML='';
+  const hwm=Math.max(S.hwm||0,S.price||0);
+  S.ladder.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    const filled=hwm>=r[0];
+    tr.className=filled?'filled':'pending';
+    tr.innerHTML=`<td><input type="number" step="1" value="${r[0]}" oninput="upd(${i},0,this.value)"></td>
+      <td><input type="number" step="1" value="${r[1]}" oninput="upd(${i},1,this.value)"></td>
+      <td>${filled?'lleno':'pend.'}</td>
+      <td><button class="btn-x" onclick="delRung(${i})">×</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+function upd(i,j,v){S.ladder[i][j]=parseFloat(v)||0;compute();save()}
+function addRung(){S.ladder.push([0,1]);renderLadder();compute();save()}
+function delRung(i){S.ladder.splice(i,1);renderLadder();compute();save()}
+function sortLadder(){S.ladder.sort((a,b)=>a[0]-b[0]);renderLadder();compute();save()}
+function genLadder(){
+  const start=S.genStart||0, step=S.genStep||0, top=S.genTop||0, lev=S.lev||5, mm=S.mm||0;
+  if(!(start>0&&step>0&&top>=start)){alert('Revisá Arranca / Cada / Hasta');return}
+  const k=1+1/lev-mm;
+  let fills=[[S.entry,S.openB]];
+  const rungs=[]; for(let p=start;p<=top+0.0001;p+=step)rungs.push(Math.round(p));
+  const out=[];
+  for(let idx=0;idx<rungs.length;idx++){
+    const P=rungs[idx], nxt=idx+1<rungs.length?rungs[idx+1]:top+step;
+    let m=0; while(m<800){m++; if(blended(fills.concat([[P,m]]),lev)*k>=nxt)break;}
+    fills.push([P,m]); out.push([P,m]);
+  }
+  S.ladder=out; renderLadder(); compute(); save();
+}
+
+// ---------- math ----------
+function blended(fills,lev){let N=0,Q=0;fills.forEach(([p,b])=>{const n=b*100*lev;N+=n;Q+=n/p});return Q?N/Q:0}
+function fmt(n,d=0){return n||n===0?n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}):'—'}
+
+function compute(){
+  const lev=S.lev||5, mm=S.mm||0, price=S.price||0;
+  const k=1+1/lev-mm;
+  const open=[[S.entry,S.openB]];
+  const hwm=Math.max(S.hwm||0,price||0);
+  const filledRungs=S.ladder.filter(r=>hwm>=r[0]&&r[0]>0);
+  const filled=open.concat(filledRungs);
+  const all=open.concat(S.ladder.filter(r=>r[0]>0));
+  // now
+  const bNow=blended(filled,lev), lqNow=bNow*k, tpNow=bNow*(1-S.tp/100/lev);
+  const bUsedNow=filled.reduce((s,r)=>s+r[1],0);
+  const dist=price?(lqNow-price)/price*100:0;
+  // projection
+  const bAll=blended(all,lev), lqAll=bAll*k;
+  const bTot=all.reduce((s,r)=>s+r[1],0);
+  const marginAll=bTot*100, reserve=S.budget-marginAll;
+
+  $('mBnow').textContent=bUsedNow; $('mBnowx').textContent='$'+fmt(bUsedNow*100)+' margen';
+  $('mBlend').textContent=fmt(bNow,0);
+  $('mLQ').textContent=fmt(lqNow,0); $('mLQx').textContent='×'+k.toFixed(3);
+  $('mDist').textContent=(dist>=0?'+':'')+dist.toFixed(1)+'%';
+  $('mDist').className='v '+(dist<5?'neg':dist<10?'neu':'pos');
+  $('mTP').textContent=fmt(tpNow,0); $('mTPx').textContent=S.tp+'% margen ('+(S.tp/lev).toFixed(1)+'% precio) bajo blended';
+  $('mRes').textContent='$'+fmt(reserve,0); $('mResx').textContent=fmt(reserve/100,0)+' balas libres';
+  $('pBtot').textContent=bTot; $('pBtotx').textContent='$'+fmt(marginAll)+' margen';
+  $('pBlend').textContent=fmt(bAll,0);
+  $('pLQ').textContent=fmt(lqAll,0);
+
+  // gauge: price between tpNow and lqNow
+  const lo=Math.min(tpNow,price), hi=Math.max(lqNow,price);
+  const span=lqNow-tpNow;
+  const pct=span>0?Math.max(0,Math.min(100,(price-tpNow)/span*100)):50;
+  $('gfill').style.width=pct+'%';
+  $('gmark').style.left=pct+'%';
+  $('glTP').textContent='TP '+fmt(tpNow,0);
+  $('glLQ').textContent='LQ '+fmt(lqNow,0);
+
+  updateLadderStatus(hwm);
+  liqVerdict(lqAll,lqNow);
+}
+function updateLadderStatus(hwm){
+  const rows=$('ladderTbl').querySelectorAll('tbody tr');
+  rows.forEach((tr,i)=>{ if(!S.ladder[i])return;
+    const filled=hwm>=S.ladder[i][0]&&S.ladder[i][0]>0;
+    tr.className=filled?'filled':'pending';
+    const cell=tr.children[2]; if(cell)cell.textContent=filled?'lleno':'pend.';
+  });
+}
+
+// ---------- liquidation zones verdict ----------
+function liqVerdict(lqAll,lqNow){
+  const sp=S.clShortP, lp=S.clLongP;
+  const el=$('clVerdict'), det=$('clDetail');
+  if(!sp){el.className='status s-amber';el.innerHTML='<span class="dot"></span><span>Cargá el cluster short de arriba.</span>';det.textContent='';return}
+  // your protective ceiling = lqAll (full ladder). Is the short-squeeze cluster above or below it?
+  const margin=((sp-lqAll)/lqAll*100);
+  let cls,txt;
+  if(sp>lqAll){cls='s-red';txt=`El muro de short ($${sp}) está ARRIBA de tu LQ máxima ($${fmt(lqAll,0)}). Si el precio sube a ese cluster, ya estás liquidado antes — NO cubierto.`}
+  else{cls='s-green';txt=`Tu LQ máxima ($${fmt(lqAll,0)}) queda ARRIBA del muro de short ($${sp}). El squeeze tendría que pasar el muro y seguir ${Math.abs(margin).toFixed(1)}% más para alcanzarte — cubierto hasta ahí.`}
+  el.className='status '+cls;el.innerHTML='<span class="dot"></span><span>'+txt+'</span>';
+  det.innerHTML=`Imán LONG abajo: <b>$${lp}</b> (~$${S.clLongM}M) — caída hacia ahí te da ganancia. `+
+    `Tu LQ ahora: <b>$${fmt(lqNow,0)}</b> · LQ si llena todo: <b>$${fmt(lqAll,0)}</b>.`;
+}
+
+// ---------- funding fetch ----------
+let manualOn=false;
+function toggleManual(){manualOn=!manualOn;$('manualBox').style.display=manualOn?'block':'none'}
+function aprFromRate(rate,perDay){return rate*perDay*365*100}
+function venueTxt(elid,rate,perDay){
+  if(rate==null){$(elid).textContent='—';$(elid).className='muted';return null}
+  const apr=aprFromRate(rate,perDay);
+  const cls=apr>0.5?'pos':apr<-0.5?'neg':'neu';
+  $(elid).innerHTML=`${(rate*100).toFixed(4)}% <span class="muted">/${perDay===24?'1h':'8h'}</span> · <b>${apr>=0?'+':''}${apr.toFixed(1)}% APR</b>`;
+  $(elid).className=cls;
+  return apr;
+}
+async function jget(url,opt){const r=await fetch(url,opt);if(!r.ok)throw new Error(r.status);return r.json()}
+
+async function fetchMarket(){
+  $('ferr').textContent='';
+  const tasks={
+    binance: jget('https://fapi.binance.com/fapi/v1/premiumIndex?symbol=ETHUSDT').then(d=>({rate:parseFloat(d.lastFundingRate),mark:parseFloat(d.markPrice)})),
+    bybit: jget('https://api.bybit.com/v5/market/tickers?category=linear&symbol=ETHUSDT').then(d=>({rate:parseFloat(d.result.list[0].fundingRate)})),
+    okx: jget('https://www.okx.com/api/v5/public/funding-rate?instId=ETH-USDT-SWAP').then(d=>({rate:parseFloat(d.data[0].fundingRate)})),
+    hl: jget('https://api.hyperliquid.xyz/info',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type:'metaAndAssetCtxs'})}).then(d=>{
+      const uni=d[0].universe, ctx=d[1]; const i=uni.findIndex(u=>u.name==='ETH'); return {rate:parseFloat(ctx[i].funding)}}),
+    ls: jget('https://fapi.binance.com/futures/data/globalLongShortAccountRatio?symbol=ETHUSDT&period=5m&limit=1').then(d=>({r:parseFloat(d[0].longShortRatio)}))
+  };
+  const res=await Promise.allSettled(Object.values(tasks));
+  const keys=Object.keys(tasks); const out={};
+  keys.forEach((k,i)=>{out[k]=res[i].status==='fulfilled'?res[i].value:null});
+
+  const aprs=[];
+  let a;
+  a=venueTxt('v-binance',out.binance?out.binance.rate:null,3); if(a!=null)aprs.push(a);
+  a=venueTxt('v-bybit',out.bybit?out.bybit.rate:null,3); if(a!=null)aprs.push(a);
+  a=venueTxt('v-okx',out.okx?out.okx.rate:null,3); if(a!=null)aprs.push(a);
+  a=venueTxt('v-hl',out.hl?out.hl.rate:null,24); if(a!=null)aprs.push(a);
+  if(out.ls){const lr=out.ls.r;$('v-ls').innerHTML=`<b>${lr.toFixed(2)}</b> ${lr>1?'<span class="pos">(más longs)</span>':'<span class="neg">(más shorts)</span>'}`;$('v-ls').className=''}
+  if(out.binance&&out.binance.mark){S.price=Math.round(out.binance.mark*100)/100;$('price').value=S.price}
+  // máximo tocado desde la apertura: máximo de los máximos diarios (klines)
+  if(S.openDate){const st=Date.parse(S.openDate);
+    if(!isNaN(st)){try{
+      const kl=await jget(`https://fapi.binance.com/fapi/v1/klines?symbol=ETHUSDT&interval=1d&startTime=${st}&limit=1500`);
+      const mx=Math.max(...kl.map(c=>parseFloat(c[2])));
+      if(isFinite(mx))S.hwm=Math.max(S.hwm||0,mx);
+    }catch(e){}}}
+  S.hwm=Math.max(S.hwm||0,S.price||0);$('hwm').value=S.hwm;compute();save();
+
+  if(aprs.length===0){$('ferr').textContent='No pude traer datos en vivo (probablemente CORS dentro de Claude). Descargá el .html y abrilo en tu navegador, o usá entrada manual.';
+    setStatus(null,out.ls?out.ls.r:null);return}
+  const agg=aprs.reduce((s,x)=>s+x,0)/aprs.length;
+  setStatus(agg,out.ls?out.ls.r:null);
+  pushHist(agg);
+}
+
+function setStatus(agg,ls){
+  const el=$('fstatus'),t=$('fstatustxt');
+  if(agg==null){el.className='status s-amber';t.textContent='Sin datos en vivo — ingresá manual o reintentá.';return}
+  let cls,txt;
+  if(agg>5){cls='s-green';txt=`FAVORABLE — agregado +${agg.toFixed(1)}% APR. Longs saturados pagan; vos (short) cobrás. La multitud está larga, no estás en la mira.`}
+  else if(agg<-5){cls='s-red';txt=`ALERTA — agregado ${agg.toFixed(1)}% APR. Shorts saturados pagan; la multitud giró a short. AHORA ESTÁS EN LA MIRA de un squeeze al alza.`}
+  else{cls='s-amber';txt=`NEUTRO — agregado ${agg.toFixed(1)}% APR. Sin multitud dominante. Vigilá el signo en las próximas lecturas.`}
+  el.className='status '+cls;t.textContent=txt;
+}
+function applyManual(){const agg=parseFloat($('mAggApr').value);const ls=parseFloat($('mLs').value);
+  if(!isNaN(agg)){setStatus(agg,isNaN(ls)?null:ls);pushHist(agg)}}
+
+// ---------- history ----------
+function pushHist(agg){S.hist.push({t:Date.now(),a:agg});if(S.hist.length>30)S.hist.shift();save();renderHist()}
+function renderHist(){
+  const h=$('hist');h.innerHTML='';
+  if(!S.hist.length){h.innerHTML='<span class="muted" style="font-size:11px">Sin lecturas todavía.</span>';return}
+  const max=Math.max(10,...S.hist.map(x=>Math.abs(x.a)));
+  S.hist.forEach(x=>{const b=document.createElement('div');b.className='hbar';
+    const ht=Math.max(8,Math.abs(x.a)/max*100);b.style.height=ht+'%';
+    b.style.background=x.a>0.5?'var(--green)':x.a<-0.5?'var(--red)':'var(--amber)';
+    b.title=new Date(x.t).toLocaleString()+' · '+(x.a>=0?'+':'')+x.a.toFixed(1)+'% APR';
+    h.appendChild(b)});
+}
+
+// clock
+setInterval(()=>{$('clock').textContent=new Date().toLocaleString('es',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'})},1000);
+load();
+</script>
+</body>
+</html>
